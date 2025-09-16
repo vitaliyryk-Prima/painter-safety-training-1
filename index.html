@@ -1,0 +1,783 @@
+import React, { useState } from 'react';
+import { ChevronRight, ChevronDown, AlertTriangle, Phone, CheckCircle, Heart, Shield, Brain, Users } from 'lucide-react';
+
+const InteractivePainterTraining = () => {
+  const [currentSection, setCurrentSection] = useState(0);
+  const [completedSections, setCompletedSections] = useState(new Set());
+  const [expandedItems, setExpandedItems] = useState(new Set());
+  const [quizAnswers, setQuizAnswers] = useState({});
+  const [showCertificate, setShowCertificate] = useState(false);
+
+  const sections = [
+    { id: 0, title: "Your Rights & Safety", icon: Shield, color: "bg-blue-500" },
+    { id: 1, title: "Mental Health Risks", icon: Brain, color: "bg-purple-500" },
+    { id: 2, title: "Warning Signs", icon: AlertTriangle, color: "bg-orange-500" },
+    { id: 3, title: "Daily Safety Practices", icon: CheckCircle, color: "bg-green-500" },
+    { id: 4, title: "Getting Help", icon: Heart, color: "bg-red-500" },
+    { id: 5, title: "Emergency Contacts", icon: Phone, color: "bg-indigo-500" },
+    { id: 6, title: "Knowledge Check", icon: Users, color: "bg-teal-500" }
+  ];
+
+  const toggleExpanded = (id) => {
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedItems(newExpanded);
+  };
+
+  const markSectionComplete = (sectionId) => {
+    const newCompleted = new Set(completedSections);
+    newCompleted.add(sectionId);
+    setCompletedSections(newCompleted);
+  };
+
+  const ProgressBar = () => (
+    <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+      <div 
+        className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-500"
+        style={{ width: `${(completedSections.size / sections.length) * 100}%` }}
+      ></div>
+    </div>
+  );
+
+  const SectionCard = ({ section, isActive, onClick }) => {
+    const Icon = section.icon;
+    const isCompleted = completedSections.has(section.id);
+    
+    return (
+      <div 
+        onClick={onClick}
+        className={`p-4 rounded-lg cursor-pointer transition-all duration-300 hover:shadow-lg ${
+          isActive ? 'ring-2 ring-blue-500 bg-blue-50' : 'bg-white'
+        } ${isCompleted ? 'border-l-4 border-green-500' : 'border border-gray-200'}`}
+      >
+        <div className="flex items-center space-x-3">
+          <div className={`${section.color} p-2 rounded-full text-white`}>
+            <Icon size={20} />
+          </div>
+          <span className="font-medium text-gray-800">{section.title}</span>
+          {isCompleted && <CheckCircle className="text-green-500" size={20} />}
+        </div>
+      </div>
+    );
+  };
+
+  const ExpandableItem = ({ id, title, children, icon: Icon }) => {
+    const isExpanded = expandedItems.has(id);
+    
+    return (
+      <div className="border border-gray-200 rounded-lg mb-3 overflow-hidden">
+        <button
+          onClick={() => toggleExpanded(id)}
+          className="w-full p-4 bg-gray-50 hover:bg-gray-100 flex items-center justify-between transition-colors"
+        >
+          <div className="flex items-center space-x-3">
+            {Icon && <Icon size={20} className="text-blue-600" />}
+            <span className="font-medium text-left">{title}</span>
+          </div>
+          {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+        </button>
+        {isExpanded && (
+          <div className="p-4 bg-white border-t border-gray-200">
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const EmergencyContact = ({ service, number, description }) => (
+    <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-3 rounded-r-lg">
+      <div className="flex justify-between items-center">
+        <div>
+          <h4 className="font-bold text-red-800">{service}</h4>
+          <p className="text-sm text-red-600">{description}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-2xl font-bold text-red-700">{number}</div>
+          <button className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors">
+            Call Now
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const QuizQuestion = ({ id, question, options, correct }) => {
+    const selected = quizAnswers[id];
+    const showResult = selected !== undefined;
+    
+    return (
+      <div className="bg-white border border-gray-200 rounded-lg p-6 mb-4">
+        <h4 className="font-medium mb-4 text-gray-800">{question}</h4>
+        <div className="space-y-2">
+          {options.map((option, index) => (
+            <button
+              key={index}
+              onClick={() => setQuizAnswers({...quizAnswers, [id]: index})}
+              className={`w-full p-3 text-left rounded-lg border transition-colors ${
+                showResult
+                  ? index === correct
+                    ? 'bg-green-100 border-green-500 text-green-800'
+                    : index === selected && index !== correct
+                    ? 'bg-red-100 border-red-500 text-red-800'
+                    : 'bg-gray-50 border-gray-200'
+                  : 'hover:bg-blue-50 border-gray-200'
+              }`}
+              disabled={showResult}
+            >
+              {option}
+              {showResult && index === correct && <CheckCircle className="float-right text-green-600" size={20} />}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderSection = () => {
+    switch(currentSection) {
+      case 0: // Your Rights & Safety
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Your Rights Under New Zealand Law</h2>
+              <p className="text-blue-100">Every painter has fundamental rights to safety and wellbeing at work.</p>
+            </div>
+            
+            <ExpandableItem id="right1" title="Right to a Safe Workplace" icon={Shield}>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Free from mental and physical health risks</li>
+                <li>• Proper ventilation and safety equipment provided</li>
+                <li>• Regular health monitoring and risk assessments</li>
+                <li>• Safe chemical storage and handling procedures</li>
+              </ul>
+            </ExpandableItem>
+
+            <ExpandableItem id="right2" title="Right to Speak Up" icon={Users}>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Report safety concerns without fear of punishment</li>
+                <li>• Participate in workplace safety discussions</li>
+                <li>• Access to union representatives</li>
+                <li>• Protected disclosure of workplace hazards</li>
+              </ul>
+            </ExpandableItem>
+
+            <ExpandableItem id="right3" title="Right to Refuse Unsafe Work" icon={AlertTriangle}>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Stop work if conditions are dangerous</li>
+                <li>• Request proper safety equipment</li>
+                <li>• Demand adequate training before starting tasks</li>
+                <li>• Protection from retaliation for safety concerns</li>
+              </ul>
+            </ExpandableItem>
+
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 rounded-r-lg">
+              <p className="font-medium text-yellow-800">
+                Remember: Your employer has a legal duty to protect your mental health, not just your physical safety.
+              </p>
+            </div>
+
+            <button 
+              onClick={() => markSectionComplete(0)}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 1: // Mental Health Risks
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-purple-600 to-purple-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Understanding Mental Health Risks</h2>
+              <p className="text-purple-100">Learn about the unique challenges painters face and their impact on mental wellbeing.</p>
+            </div>
+
+            <ExpandableItem id="risk1" title="Chemical Exposure Effects" icon={AlertTriangle}>
+              <div className="space-y-4">
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-red-800 mb-2">Immediate Effects:</h4>
+                  <ul className="text-red-700 space-y-1">
+                    <li>• Headaches and dizziness</li>
+                    <li>• Mood changes and irritability</li>
+                    <li>• Difficulty concentrating</li>
+                    <li>• Anxiety and restlessness</li>
+                  </ul>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-orange-800 mb-2">Long-term Effects:</h4>
+                  <ul className="text-orange-700 space-y-1">
+                    <li>• Memory problems</li>
+                    <li>• Chronic fatigue</li>
+                    <li>• Depression symptoms</li>
+                    <li>• Sleep disturbances</li>
+                  </ul>
+                </div>
+              </div>
+            </ExpandableItem>
+
+            <ExpandableItem id="risk2" title="Physical Stresses" icon={Heart}>
+              <ul className="space-y-2 text-gray-700">
+                <li>• <strong>Height work:</strong> Ongoing stress and fear responses</li>
+                <li>• <strong>Repetitive motions:</strong> Pain affecting mood and sleep</li>
+                <li>• <strong>Uncomfortable positions:</strong> Chronic fatigue and irritability</li>
+                <li>• <strong>Weather delays:</strong> Financial stress and uncertainty</li>
+              </ul>
+            </ExpandableItem>
+
+            <ExpandableItem id="risk3" title="Work Environment Stressors" icon={Brain}>
+              <ul className="space-y-2 text-gray-700">
+                <li>• Tight deadlines creating constant pressure</li>
+                <li>• Quality complaints and rework demands</li>
+                <li>• Isolation when working alone</li>
+                <li>• Seasonal work affecting income security</li>
+                <li>• Limited career advancement opportunities</li>
+              </ul>
+            </ExpandableItem>
+
+            <button 
+              onClick={() => markSectionComplete(1)}
+              className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 2: // Warning Signs
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-orange-600 to-orange-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Recognizing Warning Signs</h2>
+              <p className="text-orange-100">Early identification of mental health concerns is crucial for getting help.</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                <h3 className="font-bold text-blue-800 mb-3">How You're Feeling</h3>
+                <ul className="text-blue-700 text-sm space-y-1">
+                  <li>• Constantly worried</li>
+                  <li>• Feeling hopeless</li>
+                  <li>• More irritable</li>
+                  <li>• Lost interest</li>
+                  <li>• Overwhelmed</li>
+                </ul>
+              </div>
+              
+              <div className="bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-500">
+                <h3 className="font-bold text-yellow-800 mb-3">Behavior Changes</h3>
+                <ul className="text-yellow-700 text-sm space-y-1">
+                  <li>• Sleep problems</li>
+                  <li>• Increased substance use</li>
+                  <li>• Social withdrawal</li>
+                  <li>• More work mistakes</li>
+                  <li>• Poor concentration</li>
+                </ul>
+              </div>
+              
+              <div className="bg-red-50 p-4 rounded-lg border-l-4 border-red-500">
+                <h3 className="font-bold text-red-800 mb-3">Physical Signs</h3>
+                <ul className="text-red-700 text-sm space-y-1">
+                  <li>• Frequent headaches</li>
+                  <li>• Appetite changes</li>
+                  <li>• Always tired</li>
+                  <li>• Muscle tension</li>
+                  <li>• Stomach problems</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-red-100 border-2 border-red-500 p-6 rounded-lg">
+              <div className="flex items-center space-x-3 mb-4">
+                <AlertTriangle className="text-red-600" size={24} />
+                <h3 className="text-xl font-bold text-red-800">Crisis Warning Signs</h3>
+              </div>
+              <p className="text-red-700 mb-4">If you're having thoughts of hurting yourself, get help immediately:</p>
+              <div className="grid md:grid-cols-3 gap-3">
+                <div className="bg-red-600 text-white p-3 rounded text-center">
+                  <strong>Emergency: 111</strong>
+                </div>
+                <div className="bg-red-600 text-white p-3 rounded text-center">
+                  <strong>Lifeline: 0800 543 354</strong>
+                </div>
+                <div className="bg-red-600 text-white p-3 rounded text-center">
+                  <strong>Text: 1737</strong>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => markSectionComplete(2)}
+              className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 3: // Daily Safety Practices
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-green-600 to-green-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Daily Safety Practices</h2>
+              <p className="text-green-100">Simple daily habits that protect your mental and physical health.</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-800">Before Work Checklist</h3>
+                <div className="space-y-2">
+                  {[
+                    "Check you're feeling well enough to work safely",
+                    "Ensure safety equipment is available",
+                    "Plan regular breaks throughout the day",
+                    "Know who to contact if you need help"
+                  ].map((item, index) => (
+                    <label key={index} className="flex items-center space-x-3 p-2 bg-green-50 rounded">
+                      <input type="checkbox" className="text-green-600" />
+                      <span className="text-gray-700">{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-bold text-gray-800">During Work Checklist</h3>
+                <div className="space-y-2">
+                  {[
+                    "Use proper ventilation and respiratory protection",
+                    "Take breaks in fresh air regularly",
+                    "Stay hydrated and eat regular meals",
+                    "Check in with workmates"
+                  ].map((item, index) => (
+                    <label key={index} className="flex items-center space-x-3 p-2 bg-green-50 rounded">
+                      <input type="checkbox" className="text-green-600" />
+                      <span className="text-gray-700">{item}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <ExpandableItem id="chemical-safety" title="Chemical Safety Tips" icon={Shield}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-bold mb-2">Do:</h4>
+                  <ul className="text-green-700 space-y-1">
+                    <li>✓ Use exhaust fans and open windows</li>
+                    <li>✓ Wear proper masks and respirators</li>
+                    <li>✓ Take breaks every hour</li>
+                    <li>✓ Store chemicals safely</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Don't:</h4>
+                  <ul className="text-red-700 space-y-1">
+                    <li>✗ Work in enclosed spaces without ventilation</li>
+                    <li>✗ Skip wearing protective equipment</li>
+                    <li>✗ Eat or drink in paint areas</li>
+                    <li>✗ Ignore symptoms like dizziness</li>
+                  </ul>
+                </div>
+              </div>
+            </ExpandableItem>
+
+            <ExpandableItem id="height-safety" title="Working at Heights - Mental Wellbeing" icon={AlertTriangle}>
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h4 className="font-bold text-yellow-800 mb-2">Managing Fear and Stress:</h4>
+                <ul className="text-yellow-700 space-y-2">
+                  <li>• Use all safety equipment properly every time</li>
+                  <li>• Work with a buddy system when possible</li>
+                  <li>• Take breaks if feeling overwhelmed</li>
+                  <li>• Practice deep breathing techniques</li>
+                  <li>• Don't work at heights if feeling unwell</li>
+                </ul>
+              </div>
+            </ExpandableItem>
+
+            <button 
+              onClick={() => markSectionComplete(3)}
+              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 4: // Getting Help
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-red-600 to-red-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Getting Help When You Need It</h2>
+              <p className="text-red-100">Know where to turn for support - you don't have to face challenges alone.</p>
+            </div>
+
+            <ExpandableItem id="onsite-support" title="On-Site Support" icon={Users}>
+              <div className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-blue-800 mb-2">Talk to Your Supervisor or Site Manager:</h4>
+                  <ul className="text-blue-700 space-y-1">
+                    <li>• They have a legal duty to help you stay safe</li>
+                    <li>• Report work conditions affecting your mental health</li>
+                    <li>• Ask for changes to work practices if needed</li>
+                    <li>• Request additional safety equipment or training</li>
+                  </ul>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-green-800 mb-2">Workmate Support:</h4>
+                  <ul className="text-green-700 space-y-1">
+                    <li>• Look out for each other - check in regularly</li>
+                    <li>• Share concerns about work conditions</li>
+                    <li>• Support colleagues who seem struggling</li>
+                    <li>• Create positive team environment</li>
+                  </ul>
+                </div>
+              </div>
+            </ExpandableItem>
+
+            <ExpandableItem id="professional-help" title="Professional Support Services" icon={Heart}>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-purple-800 mb-3">24/7 Immediate Help:</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Emergency</span>
+                      <strong className="text-red-600">111</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Lifeline</span>
+                      <strong className="text-red-600">0800 543 354</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Text Support</span>
+                      <strong className="text-red-600">1737</strong>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-teal-50 p-4 rounded-lg">
+                  <h4 className="font-bold text-teal-800 mb-3">Ongoing Support:</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span>Depression Helpline</span>
+                      <strong>0800 111 757</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Anxiety NZ</span>
+                      <strong>0800 269 4389</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Healthline</span>
+                      <strong>0800 611 116</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ExpandableItem>
+
+            <ExpandableItem id="acc-claims" title="ACC Mental Injury Claims" icon={Shield}>
+              <div className="bg-yellow-50 p-4 rounded-lg">
+                <h4 className="font-bold text-yellow-800 mb-2">You may be entitled to ACC support for:</h4>
+                <ul className="text-yellow-700 space-y-1">
+                  <li>• Work-related stress or trauma</li>
+                  <li>• Workplace bullying or harassment</li>
+                  <li>• Exposure to workplace hazards affecting mental health</li>
+                  <li>• Workplace accidents causing ongoing mental health issues</li>
+                </ul>
+                <div className="mt-3 p-3 bg-yellow-200 rounded">
+                  <strong>To make a claim:</strong> Contact ACC on <strong>0800 101 996</strong> or visit acc.co.nz
+                </div>
+              </div>
+            </ExpandableItem>
+
+            <button 
+              onClick={() => markSectionComplete(4)}
+              className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 5: // Emergency Contacts
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Emergency Contacts</h2>
+              <p className="text-indigo-100">Keep these numbers handy - save them in your phone now!</p>
+            </div>
+
+            <div className="space-y-4">
+              <EmergencyContact 
+                service="Police, Fire, Ambulance"
+                number="111"
+                description="Immediate emergency - life threatening situations"
+              />
+              
+              <EmergencyContact 
+                service="Lifeline"
+                number="0800 543 354"
+                description="24/7 crisis support and suicide prevention"
+              />
+              
+              <EmergencyContact 
+                service="Crisis Text Line"
+                number="1737"
+                description="Free 24/7 text support service"
+              />
+              
+              <EmergencyContact 
+                service="WorkSafe New Zealand"
+                number="0800 030 040"
+                description="Report workplace safety concerns"
+              />
+            </div>
+
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="font-bold text-gray-800 mb-4">Save These in Your Phone Right Now:</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium mb-2">Mental Health Support:</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>Depression Helpline: 0800 111 757</li>
+                    <li>Anxiety NZ: 0800 269 4389</li>
+                    <li>Mental Health Foundation: 09 623 4810</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-medium mb-2">Work Support:</h4>
+                  <ul className="text-sm space-y-1">
+                    <li>ACC: 0800 101 996</li>
+                    <li>Citizens Advice: 0800 367 222</li>
+                    <li>Healthline: 0800 611 116</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-100 border-l-4 border-blue-500 p-4 rounded-r-lg">
+              <h4 className="font-bold text-blue-800 mb-2">Remember:</h4>
+              <ul className="text-blue-700 space-y-1">
+                <li>• These services are free and confidential</li>
+                <li>• You can call for yourself or someone else</li>
+                <li>• No problem is too small to get help</li>
+                <li>• Support is available in multiple languages</li>
+              </ul>
+            </div>
+
+            <button 
+              onClick={() => markSectionComplete(5)}
+              className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Mark Section Complete
+            </button>
+          </div>
+        );
+
+      case 6: // Knowledge Check
+        return (
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-teal-600 to-teal-800 text-white p-6 rounded-lg">
+              <h2 className="text-2xl font-bold mb-4">Knowledge Check</h2>
+              <p className="text-teal-100">Test your understanding with these quick questions.</p>
+            </div>
+
+            <QuizQuestion 
+              id="q1"
+              question="What should you do if paint fumes are making you feel dizzy and nauseous?"
+              options={[
+                "Continue working - it's normal",
+                "Take a break in fresh air and report it",
+                "Drink more coffee to stay alert",
+                "Work faster to finish sooner"
+              ]}
+              correct={1}
+            />
+
+            <QuizQuestion 
+              id="q2"
+              question="Which number should you call for immediate mental health crisis support?"
+              options={[
+                "0800 611 116",
+                "0800 543 354",
+                "09 623 4810",
+                "0800 030 040"
+              ]}
+              correct={1}
+            />
+
+            <QuizQuestion 
+              id="q3"
+              question="If a workmate seems withdrawn and is making more mistakes, you should:"
+              options={[
+                "Ignore it - it's not your business",
+                "Tell them to work harder",
+                "Check in with them and offer support",
+                "Report them to management immediately"
+              ]}
+              correct={2}
+            />
+
+            <QuizQuestion 
+              id="q4"
+              question="Under NZ law, you have the right to:"
+              options={[
+                "Work in unsafe conditions if told to",
+                "Refuse unsafe work without punishment",
+                "Accept bullying as part of the job",
+                "Work without proper safety equipment"
+              ]}
+              correct={1}
+            />
+
+            {Object.keys(quizAnswers).length === 4 && (
+              <div className="bg-green-50 border-2 border-green-500 p-6 rounded-lg text-center">
+                <CheckCircle className="mx-auto text-green-600 mb-4" size={48} />
+                <h3 className="text-xl font-bold text-green-800 mb-2">Great Job!</h3>
+                <p className="text-green-700 mb-4">You've completed the knowledge check. Click below to generate your certificate.</p>
+                <button 
+                  onClick={() => {
+                    markSectionComplete(6);
+                    setShowCertificate(true);
+                  }}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  Get Your Certificate
+                </button>
+              </div>
+            )}
+
+            {!showCertificate && Object.keys(quizAnswers).length < 4 && (
+              <div className="text-center text-gray-600">
+                <p>Answer all questions to complete the training and receive your certificate.</p>
+              </div>
+            )}
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  const Certificate = () => (
+    <div className="bg-white border-2 border-gray-300 p-8 rounded-lg shadow-lg text-center max-w-2xl mx-auto">
+      <div className="border-4 border-blue-600 p-6 rounded-lg">
+        <h1 className="text-3xl font-bold text-blue-800 mb-4">Certificate of Completion</h1>
+        <div className="text-lg text-gray-700 mb-6">
+          This certifies that
+        </div>
+        <div className="border-b-2 border-gray-400 mx-8 mb-6 pb-2">
+          <input 
+            type="text" 
+            placeholder="Enter your name here"
+            className="text-xl font-bold text-center w-full bg-transparent outline-none"
+          />
+        </div>
+        <div className="text-lg text-gray-700 mb-4">
+          has successfully completed the
+        </div>
+        <h2 className="text-xl font-bold text-blue-700 mb-6">
+          Mental Health & Safety Training for Painters<br/>
+          on Construction Sites
+        </h2>
+        <div className="flex justify-between items-center mt-8">
+          <div className="text-left">
+            <div className="border-b border-gray-400 w-32 mb-2"></div>
+            <div className="text-sm text-gray-600">Date</div>
+          </div>
+          <div className="text-center">
+            <Shield className="mx-auto text-blue-600 mb-2" size={32} />
+            <div className="text-sm font-medium">NZ Health & Safety Certified</div>
+          </div>
+          <div className="text-right">
+            <div className="border-b border-gray-400 w-32 mb-2"></div>
+            <div className="text-sm text-gray-600">Signature</div>
+          </div>
+        </div>
+      </div>
+      <button 
+        onClick={() => window.print()}
+        className="mt-6 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Print Certificate
+      </button>
+    </div>
+  );
+
+  if (showCertificate) {
+    return <Certificate />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Interactive Mental Health & Safety Training
+          </h1>
+          <p className="text-gray-600 text-lg">For Painters on Construction Sites</p>
+          
+          <div className="mt-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-2">
+              <span>Progress: {completedSections.size} of {sections.length} sections</span>
+              <span>{Math.round((completedSections.size / sections.length) * 100)}% Complete</span>
+            </div>
+            <ProgressBar />
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-4 gap-6">
+          {/* Navigation Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-4 sticky top-4">
+              <h3 className="font-bold text-gray-800 mb-4">Training Sections</h3>
+              <div className="space-y-2">
+                {sections.map((section) => (
+                  <SectionCard
+                    key={section.id}
+                    section={section}
+                    isActive={currentSection === section.id}
+                    onClick={() => setCurrentSection(section.id)}
+                  />
+                ))}
+              </div>
+              
+              {completedSections.size === sections.length && (
+                <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                  <CheckCircle className="mx-auto text-green-600 mb-2" size={32} />
+                  <p className="text-green-800 font-medium">Training Complete!</p>
+                  <p className="text-green-600 text-sm">You can now print your certificate.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              {renderSection()}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-gray-500 text-sm">
+          <p>This training meets New Zealand Health and Safety at Work Act 2015 requirements</p>
+          <p className="mt-2">
+            For more information: 
+            <a href="#" className="text-blue-600 hover:underline ml-1">worksafe.govt.nz</a> | 
+            <a href="#" className="text-blue-600 hover:underline ml-1">mentalhealth.org.nz</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default InteractivePainterTraining;
